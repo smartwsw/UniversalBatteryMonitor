@@ -57,6 +57,17 @@ internal sealed class TrayManager : IDisposable
         var menu = new ContextMenuStrip();
         menu.Items.Add("打开面板", null, (_, _) => _openUi());
         menu.Items.Add("立即刷新", null, (_, _) => Refresh());
+
+        // 雷蛇接收器的控制接口只对管理员开放，普通权限下始终 err=5，给个一键重启入口
+        if (!Elevation.IsAdmin())
+        {
+            menu.Items.Add("以管理员身份重启", null, (_, _) =>
+            {
+                if (Elevation.RestartElevated(out string error)) Application.Exit();
+                else MessageBox.Show(error, "提权失败", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            });
+        }
+
         menu.Items.Add(new ToolStripSeparator());
         menu.Items.Add("退出", null, (_, _) =>
         {

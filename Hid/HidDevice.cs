@@ -110,7 +110,7 @@ internal sealed class HidDevice : IDisposable
 
     public void SetFeatureReport(byte[] data)
     {
-        if (!WriteAccess) throw new HidException("当前句柄没有写权限，无法发送 Feature Report");
+        // 系统独占的接口只能用 access=0 打开，但 HidD_SetFeature 仍然可用，所以不按 WriteAccess 拦截。
         if (!Win32.HidD_SetFeature(_handle, data, (uint)data.Length))
             throw new HidException($"写 Feature Report 失败 (err={Marshal.GetLastWin32Error()})",
                 Marshal.GetLastWin32Error());

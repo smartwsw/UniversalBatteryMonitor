@@ -262,6 +262,27 @@ internal sealed class MainForm : Form
         _bootCheck.CheckedChanged += (_, _) =>
         {
             if (_bootGuarding) return;
+
+            // 管理员自启要注册 Highest 计划任务，普通权限注册不了，先请用户提权重启
+            if (_bootCheck.Checked && !Elevation.IsAdmin())
+            {
+                _bootGuarding = true;
+                _bootCheck.Checked = Autostart.IsEnabled();
+                _bootGuarding = false;
+
+                var choice = MessageBox.Show(this,
+                    "以管理员权限开机自启不会弹 UAC，需要先以管理员身份重启本程序。\n现在重启吗？",
+                    "开机自启", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+
+                if (choice == DialogResult.Yes)
+                {
+                    if (Elevation.RestartElevated(out string error)) Application.Exit();
+                    else MessageBox.Show(this, error, "提权失败", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                }
+
+                return;
+            }
+
             if (Autostart.SetEnabled(_bootCheck.Checked)) return;
 
             _bootGuarding = true;
