@@ -1,88 +1,96 @@
-# 设备电量
+# Battery Monitor
 
-Windows 托盘小工具，显示无线鼠标、键盘、手柄、耳机的剩余电量。
+A Windows tray utility that shows the remaining battery level of wireless mice, keyboards,
+controllers, and headsets.
 
-自动识别插着的设备，不用手动添加。单文件程序，拷到任何 Windows 10 / 11 机器上直接运行，
-不需要安装 .NET 运行时。
+Devices are detected automatically — no manual setup. Ships as a single executable that runs
+directly on any Windows 10 / 11 machine, with no .NET runtime required.
 
-[English](README.en.md)
+[中文](README.md)
 
-## 功能
+## Features
 
-- **自动识别外设**：插上什么就显示什么，换设备不用改配置
-- **托盘电量**：图标显示列表第一台设备的圆环电量，鼠标悬停列出前 3 台，每台一行
-- **操作**：左键刷新，双击打开面板，右键出菜单
-- **拖动排序**：设备行可以按住上下拖动，顺序会保存；把想常看的设备拖到最上面，托盘跟着换
-- **低电量通知**：任意设备低于 20% 弹一条 Windows 通知，每台只提醒一次，充电或重新连上后重新生效
-- **刷新间隔可调**，关闭窗口可选择最小化到托盘
-- **开机自启**：管理员模式下由计划任务直接以管理员身份启动，不弹 UAC
-- **电量配色**：≥60% 绿，30–59% 黄，<30% 红
-- 全程本地读取，**不联网、不写日志**
+- **Automatic detection**: whatever you plug in shows up; no configuration needed when you swap devices
+- **Tray battery**: the icon shows a ring gauge for the first device in the list; hovering lists the top 3, one per line
+- **Controls**: left click to refresh, double click to open the panel, right click for the menu
+- **Drag to reorder**: drag device rows up and down; the order is saved. Put the device you care about on top and the tray follows
+- **Low battery alerts**: a Windows notification fires when any device drops below 20%, once per device, re-armed after charging or reconnecting
+- **Adjustable refresh interval**; optionally minimize to tray instead of closing
+- **Launch at startup**: in administrator mode a scheduled task starts it elevated with no UAC prompt
+- **Battery colors**: ≥60% green, 30–59% yellow, <30% red
+- Reads everything locally — **no network access, no log files**
 
-## 支持的设备
+## Supported devices
 
-设备按本机实际插过、跑过验证的列在下表。
+Only devices actually tested on this machine are listed below.
 
-### 已验证可用
+### Verified working
 
-| 设备 | 连接方式 | 结果 |
+| Device | Connection | Result |
 |---|---|---|
-| ROG Strix Scope II 96 RX | ROG OMNI 接收器 | 可读，键盘通道 |
-| ROG Keris II Ace | ROG OMNI 接收器 | 可读，鼠标通道 |
-| 飞智黑武士 VADER4（Xbox 兼容模式） | USB 接收器 | 可读，5 档精度 |
-| Razer Viper Ultimate | 2.4G 接收器 | 可读，需管理员权限 |
+| ROG Strix Scope II 96 RX | ROG OMNI receiver | Reads, keyboard channel |
+| ROG Keris II Ace | ROG OMNI receiver | Reads, mouse channel |
+| Flydigi VADER4 (Xbox-compatible mode) | USB receiver | Reads, 5-level precision |
+| Razer Viper Ultimate | 2.4G receiver | Reads, requires administrator |
 
-一台 ROG OMNI 接收器同时挂键盘和鼠标时会拆成两行分别显示。
+One ROG OMNI receiver carrying both a keyboard and a mouse is split into two rows.
 
-### 已接但读不到电量
+### Detected but no battery reading
 
-| 设备 | 现象 |
+| Device | Symptom |
 |---|---|
-| Razer Mouse Dock | 接口不支持电量查询，已从支持列表排除 |
-| SteelSeries Arctis 7 | 接收器有应答，但耳机休眠时电量读数为 0 |
+| Razer Mouse Dock | Interface does not support battery queries; excluded from the supported list |
+| SteelSeries Arctis 7 | Receiver responds, but the battery byte reads 0 while the headset is asleep |
 
-### 其他设备
+### Other devices
 
-SteelSeries Arctis 系列（含 Arctis Pro）已适配，但本机只实测过 Arctis 7。
-没有内置协议的设备仍会尝试标准 HID 电量字段，能读到就显示，读不到会给出具体原因。
+The SteelSeries Arctis family (including Arctis Pro) is supported, but only the Arctis 7 was
+tested here. Devices without a built-in protocol still get a standard HID battery field lookup —
+if it can be read, it is shown; otherwise the row states the specific reason.
 
-## 使用
+## Usage
 
-### 获取程序
+### Getting the program
 
-从 [Releases](https://github.com/smartwsw/UniversalBatteryMonitor/releases) 下载 `BatteryMonitor.exe`
-直接运行，或用源码自行打包：
+Download `BatteryMonitor.exe` from [Releases](https://github.com/smartwsw/UniversalBatteryMonitor/releases)
+and run it, or build it from source:
 
 ```powershell
-.\build.ps1              # 打包成 dist\BatteryMonitor.exe
-.\build.ps1 -Clean       # 先清掉 bin / obj / dist 再打包
-.\build.ps1 -Run         # 打包后直接启动
+.\build.ps1              # build dist\BatteryMonitor.exe
+.\build.ps1 -Clean       # wipe bin / obj / dist first
+.\build.ps1 -Run         # build then launch
 ```
 
-默认打包 `win-x64` 自包含单文件（约 62 MB），需要别的架构传 `-Runtime win-arm64` 或 `-Runtime win-x86`。
+The default target is a self-contained `win-x64` single file (about 62 MB). Pass
+`-Runtime win-arm64` or `-Runtime win-x86` for other architectures.
 
-### 命令行参数
+### Command line
 
-| 参数 | 作用 |
+| Argument | Effect |
 |---|---|
-| 无参数 | 打开面板 |
-| `--tray` | 启动后直接驻留托盘（开机自启用的就是这个） |
-| `--once` | 命令行读一次就退出，不弹窗 |
-| `--list` | 列出本机所有 HID 接口，排查设备问题时用 |
+| none | Open the panel |
+| `--tray` | Start minimized to the tray (used by launch-at-startup) |
+| `--once` | Read once from the console and exit, no window |
+| `--list` | List every HID interface on the machine, for troubleshooting |
 
-### 面板
+### The panel
 
-面板里可以改刷新间隔、开关开机自启、选择关闭窗口时是否最小化到托盘。
-窗口默认打开在屏幕右下角，设备列表用深色细滚动条，支持滚轮和拖拽滑块。
+Change the refresh interval, toggle launch-at-startup, and choose whether closing the window
+minimizes to the tray. The window opens at the bottom-right of the screen by default, and the
+device list uses a thin dark scrollbar that supports both the wheel and dragging.
 
-## 注意事项
+## Notes
 
-- **雷蛇设备需要管理员权限**：接收器的控制接口只对管理员进程开放，普通权限下该行会提示
-  改用管理员重启。托盘右键菜单里有「以管理员身份重启」，程序不会自动提权，避免开机自启弹 UAC。
-  Razer Mouse Dock 不在支持范围内。
-- **手柄精度有限**：XInput 只给 5 档电量（空 / 低 / 中 / 满 / 未知），换算成 15 / 40 / 70 / 100%，
-  不如厂商私有协议精确。手柄插着线时仍会上报档位，界面会标成"有线连接"。
-- **设备休眠时读数为 0**：ROG OMNI 和 SteelSeries 的接收器在设备休眠时仍会应答，但电量字节是 0。
-  动一下设备再刷新即可，界面会提示而不是误报成 0%。
-- **ROG OMNI 新型号名称**：接收器自己只上报 `ROG OMNI RECEIVER`，具体型号靠配对信息反查。
-  列表里没有的新型号会显示成 `ROG 设备 0xXXXX`，补进型号表就能显示名字。
+- **Razer requires administrator**: the receiver's control interface is only open to elevated
+  processes, so on a normal launch that row suggests restarting as administrator. The tray
+  right-click menu has "Restart as administrator"; the program never elevates itself, which
+  would pop a UAC prompt at logon. The Razer Mouse Dock is out of scope.
+- **Controllers are coarse**: XInput only reports 5 levels (empty / low / medium / full / unknown),
+  mapped to 15 / 40 / 70 / 100% — less precise than vendor protocols. A controller plugged in
+  by cable still reports a level and is labeled "wired".
+- **Zero while asleep**: the ROG OMNI and SteelSeries receivers still answer while the device is
+  asleep, but the battery byte is 0. Nudge the device and refresh; the UI says so instead of
+  reporting a false 0%.
+- **ROG OMNI model names**: the receiver identifies itself only as `ROG OMNI RECEIVER`; the real
+  model comes from the pairing info. Unknown models appear as `ROG Device 0xXXXX` until they are
+  added to the model table.
