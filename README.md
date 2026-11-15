@@ -1,7 +1,7 @@
 # Battery Monitor
 
-A Windows tray utility that shows the remaining battery level of wireless mice, keyboards
-and controllers.
+A Windows tray utility that shows the remaining battery level of wireless mice, keyboards,
+controllers and headsets.
 
 Devices are detected automatically — no manual setup. Ships as a single executable that runs
 directly on any Windows 10 / 11 machine, with no .NET runtime required.
@@ -76,10 +76,21 @@ Razer needs administrator rights; at normal rights this row asks you to restart 
 
 Controllers only report 5 levels, less precise than a vendor protocol.
 
+### SteelSeries
+
+| Device | USB ID | Status |
+| --- | --- | --- |
+| SteelSeries Arctis 7 | `1038:12AD` | ![Verified](https://img.shields.io/badge/Verified-2ea44f) |
+| Other Arctis wireless headsets, including Arctis Pro | `1038:1260`, `1038:1252`, `1038:1280` | ![Untested](https://img.shields.io/badge/Untested-dfb317) |
+
+While the headset is asleep the receiver still answers, but the battery byte reads 0. Nudge
+the headset and refresh.
+
 ### Bluetooth
 
 Keyboards, mice and controllers switched to Bluetooth go through the standard Bluetooth
-battery service, independent of any vendor protocol and without a receiver.
+battery service, independent of any vendor protocol and without a receiver. Headsets do not
+use this path.
 
 | Device | USB ID | Status |
 | --- | --- | --- |
