@@ -1,12 +1,12 @@
 # Battery Monitor
 
-A Windows tray utility that shows the remaining battery level of wireless mice, keyboards,
-controllers, and headsets.
+A Windows tray utility that shows the remaining battery level of wireless mice, keyboards
+and controllers.
 
 Devices are detected automatically — no manual setup. Ships as a single executable that runs
 directly on any Windows 10 / 11 machine, with no .NET runtime required.
 
-[中文](README.md)
+[中文](README.zh.md)
 
 ## Features
 
@@ -22,31 +22,69 @@ directly on any Windows 10 / 11 machine, with no .NET runtime required.
 
 ## Supported devices
 
-Only devices actually tested on this machine are listed below.
+Each cell shows the ID a device or receiver appears as, and its status:
+![Verified](https://img.shields.io/badge/Verified-2ea44f) reads on real hardware,
+![Untested](https://img.shields.io/badge/Untested-dfb317) implemented but not yet tried,
+![Not supported](https://img.shields.io/badge/Not%20supported-9e9e9e) not supported.
 
-### Verified working
+### ASUS ROG
 
-| Device | Connection | Result |
-|---|---|---|
-| ROG Strix Scope II 96 RX | ROG OMNI receiver | Reads, keyboard channel |
-| ROG Keris II Ace | ROG OMNI receiver | Reads, mouse channel |
-| Flydigi VADER4 (Xbox-compatible mode) | USB receiver | Reads, 5-level precision |
-| Razer Viper Ultimate | 2.4G receiver | Reads, requires administrator |
+One ROG OMNI receiver can carry a keyboard and a mouse at the same time; they are split into
+two rows. The pairing ID is the model number reported in the receiver's pairing list, which is
+not the same as the USB ID the device uses when plugged in by cable.
 
-One ROG OMNI receiver carrying both a keyboard and a mouse is split into two rows.
+#### Keyboards
 
-### Detected but no battery reading
+| Device | Receiver | Pairing ID | Status |
+| --- | --- | --- | --- |
+| ROG Strix Scope II 96 RX | `0B05:1ACE` | `0x1B7A` | ![Verified](https://img.shields.io/badge/Verified-2ea44f) |
+| ROG Strix Scope II 96 | `0B05:1ACE` | `0x1AB0` | ![Untested](https://img.shields.io/badge/Untested-dfb317) |
+| ROG Azoth | `0B05:1ACE` | `0x1A85` | ![Untested](https://img.shields.io/badge/Untested-dfb317) |
+| ROG Azoth Extreme | `0B05:1ACE` | `0x1B42` | ![Untested](https://img.shields.io/badge/Untested-dfb317) |
+| ROG Azoth Extreme SE | `0B05:1ACE` | `0x1CF1` | ![Untested](https://img.shields.io/badge/Untested-dfb317) |
+| ROG Falchion RX Low Profile | `0B05:1ACE` | `0x1B06` | ![Untested](https://img.shields.io/badge/Untested-dfb317) |
 
-| Device | Symptom |
-|---|---|
-| Razer Mouse Dock | Interface does not support battery queries; excluded from the supported list |
-| SteelSeries Arctis 7 | Receiver responds, but the battery byte reads 0 while the headset is asleep |
+#### Mice
 
-### Other devices
+| Device | Receiver | Pairing ID | Status |
+| --- | --- | --- | --- |
+| ROG Keris II Ace | `0B05:1ACE` | `0x1B1A`, `0x1B18` | ![Verified](https://img.shields.io/badge/Verified-2ea44f) |
+| ROG Gladius III Aimpoint | `0B05:1ACE` | `0x1A72` | ![Untested](https://img.shields.io/badge/Untested-dfb317) |
+| ROG Harpe Ace Aim Lab Edition | `0B05:1ACE` | `0x1A94` | ![Untested](https://img.shields.io/badge/Untested-dfb317) |
+| ROG Harpe Ace Extreme | `0B05:1ACE` | `0x1B68`, `0x1B69` | ![Untested](https://img.shields.io/badge/Untested-dfb317) |
+| ROG Harpe Ace Mini | `0B05:1ACE` | `0x1B65` | ![Untested](https://img.shields.io/badge/Untested-dfb317) |
+| ROG Keris II Origin | `0B05:1ACE` | `0x1C0E` | ![Untested](https://img.shields.io/badge/Untested-dfb317) |
+| ROG Keris II Origin KJP | `0B05:1ACE` | `0x1D4E` | ![Untested](https://img.shields.io/badge/Untested-dfb317) |
+| ROG Keris Wireless Aimpoint | `0B05:1ACE` | `0x1A68`, `0x1A6A` | ![Untested](https://img.shields.io/badge/Untested-dfb317) |
+| ROG Strix Impact III Wireless | `0B05:1ACE` | `0x1AD7` | ![Untested](https://img.shields.io/badge/Untested-dfb317) |
 
-The SteelSeries Arctis family (including Arctis Pro) is supported, but only the Arctis 7 was
-tested here. Devices without a built-in protocol still get a standard HID battery field lookup —
-if it can be read, it is shown; otherwise the row states the specific reason.
+### Razer
+
+| Device | USB ID | Status |
+| --- | --- | --- |
+| Razer Viper Ultimate | `1532:007B` | ![Verified](https://img.shields.io/badge/Verified-2ea44f) |
+| Razer Mouse Dock | `1532:007E` | ![Not supported](https://img.shields.io/badge/Not%20supported-9e9e9e) |
+
+Razer needs administrator rights; at normal rights this row asks you to restart as administrator.
+
+### Controllers
+
+| Device | USB ID | Status |
+| --- | --- | --- |
+| Flydigi VADER4 (Xbox-compatible mode) | `045E:028E` | ![Verified](https://img.shields.io/badge/Verified-2ea44f) |
+| Other XInput controllers | `045E:028E` | ![Untested](https://img.shields.io/badge/Untested-dfb317) |
+
+Controllers only report 5 levels, less precise than a vendor protocol.
+
+### Bluetooth
+
+Keyboards, mice and controllers switched to Bluetooth go through the standard Bluetooth
+battery service, independent of any vendor protocol and without a receiver.
+
+| Device | USB ID | Status |
+| --- | --- | --- |
+| ROG Strix Scope II 96 RX WL | `0B05:1B7B` | ![Verified](https://img.shields.io/badge/Verified-2ea44f) |
+| Other Bluetooth keyboards, mice and controllers | — | ![Untested](https://img.shields.io/badge/Untested-dfb317) |
 
 ## Usage
 
@@ -61,7 +99,7 @@ and run it, or build it from source:
 .\build.ps1 -Run         # build then launch
 ```
 
-The default target is a self-contained `win-x64` single file (about 62 MB). Pass
+The default target is a self-contained `win-x64` single file (about 71 MB). Pass
 `-Runtime win-arm64` or `-Runtime win-x86` for other architectures.
 
 ### Command line
@@ -72,6 +110,7 @@ The default target is a self-contained `win-x64` single file (about 62 MB). Pass
 | `--tray` | Start minimized to the tray (used by launch-at-startup) |
 | `--once` | Read once from the console and exit, no window |
 | `--list` | List every HID interface on the machine, for troubleshooting |
+| `--version` | Print the version |
 
 ### The panel
 
@@ -88,9 +127,8 @@ device list uses a thin dark scrollbar that supports both the wheel and dragging
 - **Controllers are coarse**: XInput only reports 5 levels (empty / low / medium / full / unknown),
   mapped to 15 / 40 / 70 / 100% — less precise than vendor protocols. A controller plugged in
   by cable still reports a level and is labeled "wired".
-- **Zero while asleep**: the ROG OMNI and SteelSeries receivers still answer while the device is
-  asleep, but the battery byte is 0. Nudge the device and refresh; the UI says so instead of
-  reporting a false 0%.
+- **Zero while asleep**: the ROG OMNI receiver still answers while the device is asleep, but the
+  battery byte is 0. Nudge the device and refresh; the UI says so instead of reporting a false 0%.
 - **ROG OMNI model names**: the receiver identifies itself only as `ROG OMNI RECEIVER`; the real
   model comes from the pairing info. Unknown models appear as `ROG Device 0xXXXX` until they are
   added to the model table.

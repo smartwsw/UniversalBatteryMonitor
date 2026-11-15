@@ -2,7 +2,8 @@
 
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
-    <TargetFramework>net6.0-windows</TargetFramework>
+    <TargetFramework>net6.0-windows10.0.19041.0</TargetFramework>
+    <SupportedOSPlatformVersion>10.0.17763.0</SupportedOSPlatformVersion>
     <UseWindowsForms>true</UseWindowsForms>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
@@ -11,7 +12,10 @@
     <ApplicationIcon>App\app.ico</ApplicationIcon>
     <AssemblyName>BatteryMonitor</AssemblyName>
     <RootNamespace>BatteryMonitor</RootNamespace>
-    <Version>1.0.0</Version>
+    <Version>1.1.0</Version>
+    <FileVersion>1.1.0.0</FileVersion>
+    <Product>设备电量</Product>
+    <Description>Windows 托盘外设电量监控</Description>
   </PropertyGroup>
 
 </Project>

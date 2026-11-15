@@ -69,6 +69,8 @@ internal sealed class TrayManager : IDisposable
         }
 
         menu.Items.Add(new ToolStripSeparator());
+        menu.Items.Add(new ToolStripMenuItem($"版本 {AppInfo.Version}") { Enabled = false });
+        menu.Items.Add(new ToolStripSeparator());
         menu.Items.Add("退出", null, (_, _) =>
         {
             _timer.Stop();

@@ -52,6 +52,14 @@ internal static class DeviceReader
         },
         new DeviceKind
         {
+            // 蓝牙模式的设备根本不会出现在 HID 报文通道里，必须走 GATT
+            Id = "ble",
+            DefaultTitle = "蓝牙设备",
+            Applies = BleBatteryProtocol.IsSupported,
+            ReadMany = BleBatteryProtocol.ReadRows,
+        },
+        new DeviceKind
+        {
             Id = "steelseries",
             DefaultTitle = "SteelSeries 无线耳机",
             Applies = g => SteelSeriesProtocol.FindInterface(g) is not null,

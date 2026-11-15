@@ -41,7 +41,7 @@ internal sealed class MainForm : Form
     {
         _config = config;
 
-        Text = "设备电量";
+        Text = AppInfo.Title;
         // 标题栏和任务栏用嵌入的 app.ico，托盘图标仍按电量现画
         Icon = Icon.ExtractAssociatedIcon(Application.ExecutablePath);
         BackColor = BgColor;
@@ -161,7 +161,7 @@ internal sealed class MainForm : Form
 
         header.Controls.Add(new Label
         {
-            Text = "设备电量",
+            Text = AppInfo.Title,
             Font = new Font("Microsoft YaHei UI", 15f, FontStyle.Bold),
             ForeColor = FgColor,
             AutoSize = true,

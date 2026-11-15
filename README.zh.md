@@ -1,11 +1,11 @@
 # 设备电量
 
-Windows 托盘小工具，显示无线鼠标、键盘、手柄、耳机的剩余电量。
+Windows 托盘小工具，显示无线鼠标、键盘、手柄的剩余电量。
 
 自动识别插着的设备，不用手动添加。单文件程序，拷到任何 Windows 10 / 11 机器上直接运行，
 不需要安装 .NET 运行时。
 
-[English](README.en.md)
+[English](README.md)
 
 ## 功能
 
@@ -21,30 +21,68 @@ Windows 托盘小工具，显示无线鼠标、键盘、手柄、耳机的剩余
 
 ## 支持的设备
 
-设备按本机实际插过、跑过验证的列在下表。
+每个单元格是设备或接收器在系统里的 ID 和状态：
+![已验证](https://img.shields.io/badge/%E5%B7%B2%E9%AA%8C%E8%AF%81-2ea44f) 真机实测可读，
+![未验证](https://img.shields.io/badge/%E6%9C%AA%E9%AA%8C%E8%AF%81-dfb317) 已实现但没在真机上试过，
+![不支持](https://img.shields.io/badge/%E4%B8%8D%E6%94%AF%E6%8C%81-9e9e9e) 不支持。
 
-### 已验证可用
+### ASUS ROG
 
-| 设备 | 连接方式 | 结果 |
-|---|---|---|
-| ROG Strix Scope II 96 RX | ROG OMNI 接收器 | 可读，键盘通道 |
-| ROG Keris II Ace | ROG OMNI 接收器 | 可读，鼠标通道 |
-| 飞智黑武士 VADER4（Xbox 兼容模式） | USB 接收器 | 可读，5 档精度 |
-| Razer Viper Ultimate | 2.4G 接收器 | 可读，需管理员权限 |
+一台 ROG OMNI 接收器可以同时挂键盘和鼠标，会拆成两行分别显示。
+配对 ID 是接收器配对列表里报的型号编号，和设备单独插线时的 USB ID 不是同一个。
 
-一台 ROG OMNI 接收器同时挂键盘和鼠标时会拆成两行分别显示。
+#### 键盘
 
-### 已接但读不到电量
+| 设备 | 接收器 | 配对 ID | 状态 |
+| --- | --- | --- | --- |
+| ROG Strix Scope II 96 RX | `0B05:1ACE` | `0x1B7A` | ![已验证](https://img.shields.io/badge/%E5%B7%B2%E9%AA%8C%E8%AF%81-2ea44f) |
+| ROG Strix Scope II 96 | `0B05:1ACE` | `0x1AB0` | ![未验证](https://img.shields.io/badge/%E6%9C%AA%E9%AA%8C%E8%AF%81-dfb317) |
+| ROG Azoth | `0B05:1ACE` | `0x1A85` | ![未验证](https://img.shields.io/badge/%E6%9C%AA%E9%AA%8C%E8%AF%81-dfb317) |
+| ROG Azoth Extreme | `0B05:1ACE` | `0x1B42` | ![未验证](https://img.shields.io/badge/%E6%9C%AA%E9%AA%8C%E8%AF%81-dfb317) |
+| ROG Azoth Extreme SE | `0B05:1ACE` | `0x1CF1` | ![未验证](https://img.shields.io/badge/%E6%9C%AA%E9%AA%8C%E8%AF%81-dfb317) |
+| ROG Falchion RX Low Profile | `0B05:1ACE` | `0x1B06` | ![未验证](https://img.shields.io/badge/%E6%9C%AA%E9%AA%8C%E8%AF%81-dfb317) |
 
-| 设备 | 现象 |
-|---|---|
-| Razer Mouse Dock | 接口不支持电量查询，已从支持列表排除 |
-| SteelSeries Arctis 7 | 接收器有应答，但耳机休眠时电量读数为 0 |
+#### 鼠标
 
-### 其他设备
+| 设备 | 接收器 | 配对 ID | 状态 |
+| --- | --- | --- | --- |
+| ROG Keris II Ace | `0B05:1ACE` | `0x1B1A`、`0x1B18` | ![已验证](https://img.shields.io/badge/%E5%B7%B2%E9%AA%8C%E8%AF%81-2ea44f) |
+| ROG Gladius III Aimpoint | `0B05:1ACE` | `0x1A72` | ![未验证](https://img.shields.io/badge/%E6%9C%AA%E9%AA%8C%E8%AF%81-dfb317) |
+| ROG Harpe Ace Aim Lab Edition | `0B05:1ACE` | `0x1A94` | ![未验证](https://img.shields.io/badge/%E6%9C%AA%E9%AA%8C%E8%AF%81-dfb317) |
+| ROG Harpe Ace Extreme | `0B05:1ACE` | `0x1B68`、`0x1B69` | ![未验证](https://img.shields.io/badge/%E6%9C%AA%E9%AA%8C%E8%AF%81-dfb317) |
+| ROG Harpe Ace Mini | `0B05:1ACE` | `0x1B65` | ![未验证](https://img.shields.io/badge/%E6%9C%AA%E9%AA%8C%E8%AF%81-dfb317) |
+| ROG Keris II Origin | `0B05:1ACE` | `0x1C0E` | ![未验证](https://img.shields.io/badge/%E6%9C%AA%E9%AA%8C%E8%AF%81-dfb317) |
+| ROG Keris II Origin KJP | `0B05:1ACE` | `0x1D4E` | ![未验证](https://img.shields.io/badge/%E6%9C%AA%E9%AA%8C%E8%AF%81-dfb317) |
+| ROG Keris Wireless Aimpoint | `0B05:1ACE` | `0x1A68`、`0x1A6A` | ![未验证](https://img.shields.io/badge/%E6%9C%AA%E9%AA%8C%E8%AF%81-dfb317) |
+| ROG Strix Impact III Wireless | `0B05:1ACE` | `0x1AD7` | ![未验证](https://img.shields.io/badge/%E6%9C%AA%E9%AA%8C%E8%AF%81-dfb317) |
 
-SteelSeries Arctis 系列（含 Arctis Pro）已适配，但本机只实测过 Arctis 7。
-没有内置协议的设备仍会尝试标准 HID 电量字段，能读到就显示，读不到会给出具体原因。
+### Razer
+
+| 设备 | USB ID | 状态 |
+| --- | --- | --- |
+| Razer Viper Ultimate | `1532:007B` | ![已验证](https://img.shields.io/badge/%E5%B7%B2%E9%AA%8C%E8%AF%81-2ea44f) |
+| Razer Mouse Dock | `1532:007E` | ![不支持](https://img.shields.io/badge/%E4%B8%8D%E6%94%AF%E6%8C%81-9e9e9e) |
+
+Razer 需要管理员权限，普通权限下这一行会提示改用管理员重启。
+
+### 手柄
+
+| 设备 | USB ID | 状态 |
+| --- | --- | --- |
+| 飞智黑武士 VADER4（Xbox 兼容模式） | `045E:028E` | ![已验证](https://img.shields.io/badge/%E5%B7%B2%E9%AA%8C%E8%AF%81-2ea44f) |
+| 其他 XInput 手柄 | `045E:028E` | ![未验证](https://img.shields.io/badge/%E6%9C%AA%E9%AA%8C%E8%AF%81-dfb317) |
+
+手柄只能读到 5 档电量，不如厂商私有协议精确。
+
+### 蓝牙
+
+键盘、鼠标、手柄切到蓝牙后走标准蓝牙电量服务，不依赖厂商私有协议，
+不经过接收器。
+
+| 设备 | USB ID | 状态 |
+| --- | --- | --- |
+| ROG Strix Scope II 96 RX WL | `0B05:1B7B` | ![已验证](https://img.shields.io/badge/%E5%B7%B2%E9%AA%8C%E8%AF%81-2ea44f) |
+| 其他蓝牙键鼠手柄 | — | ![未验证](https://img.shields.io/badge/%E6%9C%AA%E9%AA%8C%E8%AF%81-dfb317) |
 
 ## 使用
 
@@ -59,7 +97,7 @@ SteelSeries Arctis 系列（含 Arctis Pro）已适配，但本机只实测过 A
 .\build.ps1 -Run         # 打包后直接启动
 ```
 
-默认打包 `win-x64` 自包含单文件（约 62 MB），需要别的架构传 `-Runtime win-arm64` 或 `-Runtime win-x86`。
+默认打包 `win-x64` 自包含单文件（约 71 MB），需要别的架构传 `-Runtime win-arm64` 或 `-Runtime win-x86`。
 
 ### 命令行参数
 
@@ -69,6 +107,7 @@ SteelSeries Arctis 系列（含 Arctis Pro）已适配，但本机只实测过 A
 | `--tray` | 启动后直接驻留托盘（开机自启用的就是这个） |
 | `--once` | 命令行读一次就退出，不弹窗 |
 | `--list` | 列出本机所有 HID 接口，排查设备问题时用 |
+| `--version` | 打印版本号 |
 
 ### 面板
 
@@ -82,7 +121,7 @@ SteelSeries Arctis 系列（含 Arctis Pro）已适配，但本机只实测过 A
   Razer Mouse Dock 不在支持范围内。
 - **手柄精度有限**：XInput 只给 5 档电量（空 / 低 / 中 / 满 / 未知），换算成 15 / 40 / 70 / 100%，
   不如厂商私有协议精确。手柄插着线时仍会上报档位，界面会标成"有线连接"。
-- **设备休眠时读数为 0**：ROG OMNI 和 SteelSeries 的接收器在设备休眠时仍会应答，但电量字节是 0。
+- **设备休眠时读数为 0**：ROG OMNI 接收器在设备休眠时仍会应答，但电量字节是 0。
   动一下设备再刷新即可，界面会提示而不是误报成 0%。
 - **ROG OMNI 新型号名称**：接收器自己只上报 `ROG OMNI RECEIVER`，具体型号靠配对信息反查。
   列表里没有的新型号会显示成 `ROG 设备 0xXXXX`，补进型号表就能显示名字。

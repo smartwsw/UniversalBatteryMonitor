@@ -23,6 +23,12 @@ internal static class Program
             return;
         }
 
+        if (args.Any(a => a.Equals("--version", StringComparison.OrdinalIgnoreCase)))
+        {
+            Console.WriteLine(AppInfo.Title);
+            return;
+        }
+
         ApplicationConfiguration.Initialize();
         Application.SetHighDpiMode(HighDpiMode.PerMonitorV2);
 
@@ -70,6 +76,7 @@ internal static class Program
     private static void ListHid()
     {
         var all = Hid.HidEnumerator.Enumerate();
+        Console.WriteLine(AppInfo.Title);
         Console.WriteLine($"共 {all.Count} 个 HID 接口");
         foreach (var d in all.OrderBy(d => d.Vid).ThenBy(d => d.Pid).ThenBy(d => d.UsagePage))
         {
@@ -81,6 +88,9 @@ internal static class Program
 
     private static void RunOnce()
     {
+        Console.WriteLine(AppInfo.Title);
+        Console.WriteLine();
+
         foreach (var r in DeviceReader.ReadAll())
         {
             if (r.Ok)
