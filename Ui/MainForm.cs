@@ -403,9 +403,22 @@ internal sealed class MainForm : Form
             .ToList();
     }
 
+    /// <summary>
+    /// 鼠标在窗口外松开时 Row 收不到 MouseUp，状态会卡在拖动高亮上。
+    /// 每次开始拖动前先兜底复位一次。
+    /// </summary>
+    private void ResetDragVisuals()
+    {
+        foreach (var r in _list.Controls.OfType<DeviceRow>())
+        {
+            if (r.Visual != DragVisual.Normal) r.Visual = DragVisual.Normal;
+        }
+    }
+
     private void BeginDrag(DeviceRow row, MouseEventArgs e)
     {
         if (e.Button != MouseButtons.Left) return;
+        ResetDragVisuals();
         _dragRow = row;
         _dragStart = Cursor.Position;
         _dragMoved = false;
@@ -421,12 +434,28 @@ internal sealed class MainForm : Form
             if (Math.Abs(Cursor.Position.Y - _dragStart.Y) < 6 &&
                 Math.Abs(Cursor.Position.X - _dragStart.X) < 6) return;
             _dragMoved = true;
-            _dragRow.Cursor = Cursors.SizeNS;
+            // 真正开始拖动才进入"抬起态"，避免单击也被高亮
+            _dragRow.Visual = DragVisual.Dragging;
         }
 
         var point = _list.PointToClient(Cursor.Position);
         var target = _list.Controls.OfType<DeviceRow>()
                           .FirstOrDefault(r => r != _dragRow && r.Bounds.Contains(point));
+
+        // 先把上一轮的落位高亮清掉，再给当前目标上色
+        foreach (var other in _list.Controls.OfType<DeviceRow>())
+        {
+            if (other == _dragRow) continue;
+            if (other == target)
+            {
+                other.Visual = DragVisual.DropTarget;
+            }
+            else if (other.Visual == DragVisual.DropTarget)
+            {
+                other.Visual = DragVisual.Normal;
+            }
+        }
+
         if (target is null) return;
 
         int from = _list.Controls.GetChildIndex(_dragRow);
@@ -442,8 +471,10 @@ internal sealed class MainForm : Form
         if (row is null) return;
 
         row.Capture = false;
-        row.Cursor = Cursors.SizeNS;
         _dragRow = null;
+
+        // 无论这次算不算拖动，都把高亮状态复位
+        ResetDragVisuals();
 
         if (!_dragMoved) return;
         _dragMoved = false;
@@ -543,6 +574,15 @@ internal sealed class MainForm : Form
     }
 }
 
+/// <summary>设备行的拖拽视觉状态。</summary>
+internal enum DragVisual
+{
+    Normal,
+    Hover,
+    Dragging,
+    DropTarget,
+}
+
 /// <summary>纵向排列的设备行：左侧名称与状态，右侧大号电量数字和进度条。</summary>
 internal sealed class DeviceRow : Panel
 {
@@ -550,6 +590,8 @@ internal sealed class DeviceRow : Panel
     private static readonly Color Fg = Color.FromArgb(232, 234, 237);
     private static readonly Color Sub = Color.FromArgb(124, 130, 138);
     private static readonly Color Card = Color.FromArgb(32, 34, 38);
+    private static readonly Color CardActive = Color.FromArgb(41, 45, 52);
+    private static readonly Color CardTarget = Color.FromArgb(38, 50, 66);
     private static readonly Color Track = Color.FromArgb(46, 49, 55);
 
     private readonly TableLayoutPanel _grid;
@@ -563,10 +605,10 @@ internal sealed class DeviceRow : Panel
     public DeviceRow(string title)
     {
         BackColor = Card;
-        // 行高按内容实测给足：标题 44 + 数字 58 + 进度条 15 + 详情 22 + 上下留白 22
-        Height = 166;
-        Margin = new Padding(0, 0, 0, 8);
-        Padding = new Padding(16, 12, 16, 10);
+        // 行高由 FitTypography 按字体实测，这里只是设计时占位值
+        Height = 128;
+        Margin = new Padding(0, 0, 0, 6);
+        Padding = new Padding(16, 9, 16, 9);
         DoubleBuffered = true;
 
         _grid = new TableLayoutPanel
@@ -594,8 +636,9 @@ internal sealed class DeviceRow : Panel
             BackColor = Card,
             Margin = new Padding(0),
         };
+        caption.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
         caption.RowStyles.Add(new RowStyle(SizeType.Absolute, 24));
-        caption.RowStyles.Add(new RowStyle(SizeType.Absolute, 22));
+        caption.RowStyles.Add(new RowStyle(SizeType.Absolute, 18));
 
         _title = new Label
         {
@@ -642,7 +685,7 @@ internal sealed class DeviceRow : Panel
         _grid.Controls.Add(_level, 1, 1);
 
         _bar = new LevelBar { Height = 5, BackColor = Card, Dock = DockStyle.Fill };
-        _bar.Margin = new Padding(0, 0, 0, 10);
+        _bar.Margin = new Padding(0, 0, 0, 4);
         _grid.Controls.Add(_bar, 0, 2);
         _grid.SetColumnSpan(_bar, 2);
 
@@ -671,10 +714,13 @@ internal sealed class DeviceRow : Panel
         int caption = TextRenderer.MeasureText("Ag国", _title.Font).Height;
         int big = TextRenderer.MeasureText("100%", _level.Font).Height;
 
-        _grid.RowStyles[0].Height = Math.Max(caption + line + 2, 40);
-        _grid.RowStyles[1].Height = Math.Max(big, 40);
-        _grid.RowStyles[2].Height = 15;
-        _grid.RowStyles[3].Height = line + 4;
+        // 行高按实测内容给，不再留 40px 的下限余量：
+        // 30pt 数字实测约 52px，标题+副标题约 36px，多出来的空白就是卡片显得过高的原因。
+        _grid.RowStyles[0].Height = caption + line + 2;
+        _grid.RowStyles[1].Height = big;
+        // 进度条行含 4px 下边距：留白由行的 Padding 统一给，不在每行重复叠加
+        _grid.RowStyles[2].Height = 5 + 4;
+        _grid.RowStyles[3].Height = line + 2;
 
         _grid.ColumnStyles[1].Width = _level.Width;
 
@@ -685,11 +731,126 @@ internal sealed class DeviceRow : Panel
                  + Padding.Vertical;
     }
 
+    /// <summary>
+    /// 拖拽视觉状态：
+    ///   Normal  常态；Hover 鼠标悬停；Dragging 正被拖动（抬起态）；
+    ///   DropTarget 被拖动的行正悬停在它上面（落位提示）。
+    /// </summary>
+    private DragVisual _visual = DragVisual.Normal;
+
+    internal DragVisual Visual
+    {
+        get => _visual;
+        set
+        {
+            if (_visual == value) return;
+            _visual = value;
+            ApplyVisual();
+            // 边框画在子控件之下，子控件不重绘就看不到新边框，这里强行一起刷新
+            Invalidate(true);
+        }
+    }
+
+    private void ApplyVisual()
+    {
+        switch (_visual)
+        {
+            case DragVisual.Dragging:
+                // 拖动中：稍微提亮表明"已被抓起"，光标也提示这是可移动的
+                BackColor = CardActive;
+                _grid.BackColor = CardActive;
+                Cursor = Cursors.SizeNS;
+                break;
+
+            case DragVisual.DropTarget:
+                // 落位目标：用更亮的底色，配合下面的高亮描边
+                BackColor = CardTarget;
+                _grid.BackColor = CardTarget;
+                Cursor = Cursors.Default;
+                break;
+
+            default:
+                BackColor = Card;
+                _grid.BackColor = Card;
+                Cursor = Cursors.Default;
+                break;
+        }
+    }
+
     protected override void OnPaint(PaintEventArgs e)
     {
         base.OnPaint(e);
-        using var pen = new Pen(Color.FromArgb(52, 56, 62));
-        e.Graphics.DrawRectangle(pen, 0, 0, Width - 1, Height - 1);
+        // 子控件各自绘制，会盖住父控件的边框，所以补画一遍在上层
+        DrawBorder(e.Graphics);
+        PaintBorderOverChildren();
+    }
+
+    /// <summary>
+    /// 子控件是独立窗口，永远画在父控件之上，父控件的描边会被它们盖掉。
+    /// 这里让每个子控件在自身绘制结束后补一笔边框，保证高亮框始终可见。
+    /// </summary>
+    private void PaintBorderOverChildren()
+    {
+        foreach (Control child in Controls)
+        {
+            child.Paint -= ChildPaint;
+            child.Paint += ChildPaint;
+        }
+    }
+
+    private void ChildPaint(object? sender, PaintEventArgs e)
+    {
+        if (sender is not Control c) return;
+        // 子控件坐标系平移到父控件，边框才能画在正确位置
+        var saved = e.Graphics.Save();
+        e.Graphics.TranslateTransform(-c.Left, -c.Top);
+        DrawBorder(e.Graphics);
+        e.Graphics.Restore(saved);
+    }
+
+    private void DrawBorder(Graphics g)
+    {
+        switch (_visual)
+        {
+            case DragVisual.Dragging:
+            {
+                // 拖起的那一行：亮色描边 + 内层高光，做出"浮起"的感觉
+                using var glow = new Pen(Color.FromArgb(90, 140, 210), 2f);
+                g.DrawRectangle(glow, 1, 1, Width - 3, Height - 3);
+                using var inner = new Pen(Color.FromArgb(38, 62, 96), 1f);
+                g.DrawRectangle(inner, 3, 3, Width - 7, Height - 7);
+                break;
+            }
+
+            case DragVisual.DropTarget:
+            {
+                // 落位目标：虚线框，明确"松手会插到这里"
+                using var pen = new Pen(Color.FromArgb(90, 140, 210), 1.5f) { DashStyle = DashStyle.Dash };
+                g.DrawRectangle(pen, 1, 1, Width - 3, Height - 3);
+                break;
+            }
+
+            case DragVisual.Hover:
+            {
+                using var pen = new Pen(Color.FromArgb(72, 78, 88));
+                g.DrawRectangle(pen, 0, 0, Width - 1, Height - 1);
+                break;
+            }
+
+            default:
+            {
+                using var pen = new Pen(Color.FromArgb(52, 56, 62));
+                g.DrawRectangle(pen, 0, 0, Width - 1, Height - 1);
+                break;
+            }
+        }
+    }
+
+    /// <summary>悬停进入/离开时由外部调用，只在非拖拽状态下生效。</summary>
+    internal void SetHover(bool on)
+    {
+        if (_visual is DragVisual.Dragging or DragVisual.DropTarget) return;
+        Visual = on ? DragVisual.Hover : DragVisual.Normal;
     }
 
     /// <summary>整行都可拖动：子控件上的鼠标事件也交给行本身处理。</summary>
@@ -701,6 +862,8 @@ internal sealed class DeviceRow : Panel
             control.MouseDown += (_, e) => down(e);
             control.MouseMove += (_, e) => move(e);
             control.MouseUp += (_, e) => up(e);
+            control.MouseMove += (_, _) => SetHover(true);
+            control.MouseLeave += (_, _) => SetHover(false);
             foreach (Control child in control.Controls) Hook(child);
         }
 

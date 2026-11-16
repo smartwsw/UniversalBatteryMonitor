@@ -30,6 +30,13 @@ if (-not (Test-Path $project)) {
     throw "找不到项目文件：$project"
 }
 
+# 优先用项目内的 .dotnet（裁剪发布需要 .NET 8 SDK）；
+# 没有就用系统 dotnet，但系统只有 .NET 6 SDK 时裁剪不生效。
+$localDotnet = Join-Path $root '.dotnet\dotnet.exe'
+$dotnet = if (Test-Path $localDotnet) { $localDotnet } else { 'dotnet' }
+$env:DOTNET_NOLOGO = '1'
+$env:DOTNET_CLI_TELEMETRY_OPTOUT = '1'
+
 if ($Clean) {
     Write-Host '清理 bin / obj / dist ...' -ForegroundColor DarkGray
     foreach ($dir in @('bin', 'obj', 'dist')) {
@@ -48,6 +55,12 @@ $publishArgs = @(
     '-p:PublishSingleFile=true'
     '-p:IncludeNativeLibrariesForSelfExtract=true'
     '-p:EnableCompressionInSingleFile=true'
+    # 裁剪：实测 69.4MB -> 42.5MB。WinForms 官方不支持裁剪（SDK 会报 NETSDK1175），
+    # 这里用 _SuppressWinFormsTrimError 显式放行，代价是需要自己承担 WinForms 的
+    # COM 封送风险。partial 模式只裁明确标记可裁的程序集，应用自身代码不会被改。
+    '-p:PublishTrimmed=true'
+    '-p:TrimMode=partial'
+    '-p:_SuppressWinFormsTrimError=true'
     '-p:DebugType=None'
     '-p:DebugSymbols=false'
     '-p:SatelliteResourceLanguages=zh-Hans'
@@ -55,7 +68,7 @@ $publishArgs = @(
     '--nologo'
 )
 
-& dotnet @publishArgs
+& $dotnet @publishArgs
 if ($LASTEXITCODE -ne 0) {
     throw "dotnet publish 失败（退出码 $LASTEXITCODE）"
 }

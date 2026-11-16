@@ -32,6 +32,19 @@ internal static class Program
         ApplicationConfiguration.Initialize();
         Application.SetHighDpiMode(HighDpiMode.PerMonitorV2);
 
+        // 未处理异常默认会弹 WinForms 的错误框，一闪而过且留不下线索。
+        // 这里统一接管并写到 %LOCALAPPDATA%\BatteryMonitor\crash.log，
+        // 出问题时能直接看到堆栈，而不是只看到一个闪过的窗口。
+        Application.SetUnhandledExceptionMode(UnhandledExceptionMode.CatchException);
+        Application.ThreadException += (_, e) => LogException("UI 线程", e.Exception);
+        AppDomain.CurrentDomain.UnhandledException +=
+            (_, e) => LogException("域", e.ExceptionObject as Exception);
+        TaskScheduler.UnobservedTaskException += (_, e) =>
+        {
+            LogException("后台任务", e.Exception);
+            e.SetObserved();
+        };
+
         var form = new MainForm(config);
         TrayManager? tray = null;
 
@@ -62,6 +75,24 @@ internal static class Program
         bool startHidden = args.Any(a => a.Equals("--tray", StringComparison.OrdinalIgnoreCase));
         if (startHidden) Application.Run(new ApplicationContext(form));
         else Application.Run(form);
+    }
+
+    private static void LogException(string source, Exception? ex)
+    {
+        if (ex is null) return;
+        try
+        {
+            string path = Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                "BatteryMonitor", "crash.log");
+            Directory.CreateDirectory(Path.GetDirectoryName(path)!);
+            File.AppendAllText(path,
+                $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss.fff}] {source}:{Environment.NewLine}{ex}{Environment.NewLine}{Environment.NewLine}");
+        }
+        catch
+        {
+            // 日志写不下去也不能再抛，否则又是一层错误框
+        }
     }
 
     private static void ShowForm(MainForm form)

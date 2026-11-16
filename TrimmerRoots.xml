@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  裁剪保留清单。
+
+  WinForms 在销毁窗口句柄（WM_DESTROY）时会调用 Control.ReleaseUiaProvider
+  释放 UI 自动化提供者，该调用依赖内置 COM 封送的
+  System.StubHelpers.InterfaceMarshaler 等类型。裁剪器会把这些类型当成
+  "反射不可达"删掉，导致退出时每个窗口销毁都抛 TypeLoadException
+  （表现就是一串一闪而过的 .NET 未处理异常框）。
+
+  显式保留这些类型，换来的是约 1MB 的体积，属于必要的代价。
+-->
+<linker>
+  <assembly fullname="System.Private.CoreLib">
+    <type fullname="System.StubHelpers.InterfaceMarshaler" preserve="all" />
+    <type fullname="System.StubHelpers.ObjectMarshaler" preserve="all" />
+    <type fullname="System.StubHelpers.MngdNativeArrayMarshaler" preserve="all" />
+    <type fullname="System.StubHelpers.MngdRefCustomMarshaler" preserve="all" />
+    <type fullname="System.StubHelpers.BSTRMarshaler" preserve="all" />
+  </assembly>
+</linker>

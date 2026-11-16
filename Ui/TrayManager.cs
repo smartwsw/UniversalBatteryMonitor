@@ -21,6 +21,12 @@ internal sealed class TrayManager : IDisposable
     private bool _busy;
     private bool _disposed;
 
+    /// <summary>单击图标弹出的小面板，显示第一台设备的名称和电量。</summary>
+    private readonly TrayFlyout _flyout = new();
+
+    /// <summary>最近一次读到的设备列表，供小面板展示（按用户保存的顺序）。</summary>
+    private List<(string Title, int? Level, bool Charging, string Note)>? _devices;
+
     public TrayManager(AppConfig config, Action openUi)
     {
         _ui = SynchronizationContext.Current ?? new WindowsFormsSynchronizationContext();
@@ -28,10 +34,10 @@ internal sealed class TrayManager : IDisposable
         _openUi = openUi;
 
         _icon.ContextMenuStrip = BuildMenu();
-        // 单击刷新，双击打开面板
+        // 单击弹出小面板
         _icon.MouseClick += (_, e) =>
         {
-            if (e.Button == MouseButtons.Left) Refresh();
+            if (e.Button == MouseButtons.Left) ShowFlyout();
         };
         _icon.DoubleClick += (_, _) => _openUi();
         // Icon 必须先于 Visible 设置，否则托盘里出来的是空白图标
@@ -46,6 +52,18 @@ internal sealed class TrayManager : IDisposable
         Refresh();
     }
 
+    /// <summary>弹出小面板；面板已经打开时再点一次就收起。</summary>
+    private void ShowFlyout()
+    {
+        _flyout.Update(_devices ?? new List<(string, int?, bool, string)>());
+
+        // 先按内容算好高度再定位，否则会按上一轮的高度摆放
+        int h = _flyout.PreferredHeight(_devices?.Count ?? 0);
+        _flyout.ClientSize = new Size(_flyout.ClientSize.Width, h);
+
+        _flyout.Toggle();
+    }
+
     public void ApplyInterval(int seconds)
     {
         _timer.Interval = Math.Max(10, seconds) * 1000;
@@ -55,7 +73,11 @@ internal sealed class TrayManager : IDisposable
     private ContextMenuStrip BuildMenu()
     {
         var menu = new ContextMenuStrip();
-        menu.Items.Add("打开面板", null, (_, _) => _openUi());
+        menu.Items.Add("打开面板", null, (_, _) =>
+        {
+            _flyout.Hide();
+            _openUi();
+        });
         menu.Items.Add("立即刷新", null, (_, _) => Refresh());
 
         // 雷蛇接收器的控制接口只对管理员开放，普通权限下始终 err=5，给个一键重启入口
@@ -109,15 +131,52 @@ internal sealed class TrayManager : IDisposable
     private void Apply(List<DeviceLevel> levels)
     {
         var ordered = SortBySavedOrder(levels);
+
+        // 列表数据：名称、电量、是否充电、失败时的简短说明。
+        // 读取正常的设备 Note 留空，避免正常行也挂一句错误文案。
+        _devices = ordered
+            .Select(d => (d.Title,
+                          d.Level,
+                          d.Charging,
+                          d.Level is null ? ShortNote(d.Error) : ""))
+            .ToList();
+
         var first = ordered.FirstOrDefault();
         if (first.Key is null)
         {
             SetIcon(null, "未检测到外设");
+            if (_flyout.Visible) ShowFlyoutUpdate();
             return;
         }
 
         SetIcon(first.Level, BuildTooltip(ordered));
+
+        // 面板开着时同步刷新，不必等下次点击
+        if (_flyout.Visible) ShowFlyoutUpdate();
+
         NotifyLowLevels(ordered);
+    }
+
+    /// <summary>只刷新面板内容与高度，不改变显示/隐藏状态。</summary>
+    private void ShowFlyoutUpdate()
+    {
+        _flyout.Update(_devices ?? new List<(string, int?, bool, string)>());
+        int h = _flyout.PreferredHeight(_devices?.Count ?? 0);
+        _flyout.ClientSize = new Size(_flyout.ClientSize.Width, h);
+    }
+
+    /// <summary>
+    /// 失败原因在列表里只占一行，取第一个分句，
+    /// 过长就交给绘制层用省略号收尾。
+    /// </summary>
+    private static string ShortNote(string error)
+    {
+        if (string.IsNullOrWhiteSpace(error)) return "读取失败";
+
+        // 原文常带括号补充说明，列表里只保留主干
+        int cut = error.IndexOfAny(new[] { '（', '(' });
+        string main = cut > 0 ? error[..cut] : error;
+        return main.Trim().TrimEnd('。', '，', ',');
     }
 
     private static string BuildTooltip(List<DeviceLevel> levels)
@@ -201,11 +260,13 @@ internal sealed class TrayManager : IDisposable
     {
         if (_disposed) return;
         _disposed = true;
+
         _timer.Stop();
         _timer.Dispose();
 
         _icon.Visible = false;
         _icon.Dispose();
         _glyph?.Dispose();
+        _flyout.Dispose();
     }
 }
