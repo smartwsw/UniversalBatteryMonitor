@@ -358,7 +358,11 @@ internal sealed class MainForm : Form
 
         foreach (var stale in _rows.Keys.Where(k => ordered.All(r => r.Key != k)).ToList())
         {
-            _rows[stale].Dispose();
+            var dead = _rows[stale];
+            // 必须先移出控件集合再 Dispose：只 Dispose 的话控件还挂在 _list.Controls 里，
+            // 之后按控件顺序保存排序时会拿到它（已不在 _rows 中）而算出 null key。
+            _list.Controls.Remove(dead);
+            dead.Dispose();
             _rows.Remove(stale);
         }
 
@@ -379,7 +383,10 @@ internal sealed class MainForm : Form
 
         // 控件顺序跟着排序结果走
         for (int i = 0; i < ordered.Count; i++)
-            _list.Controls.SetChildIndex(_rows[ordered[i].Key], i);
+        {
+            if (_rows.TryGetValue(ordered[i].Key, out var target))
+                _list.Controls.SetChildIndex(target, i);
+        }
 
         ResizeRows();
 
@@ -479,10 +486,25 @@ internal sealed class MainForm : Form
         if (!_dragMoved) return;
         _dragMoved = false;
 
-        _config.DeviceOrder = _list.Controls.OfType<DeviceRow>()
-            .Select(r => _rows.FirstOrDefault(p => p.Value == r).Key)
-            .Where(k => k is not null)
-            .ToList()!;
+        // 按控件顺序反查 key。用字典反查而不是 FirstOrDefault，
+        // 避免找不到时拿到 default(KeyValuePair) 的 null key。
+        var byRow = new Dictionary<DeviceRow, string>();
+        foreach (var pair in _rows) byRow[pair.Value] = pair.Key;
+
+        var order = new List<string>();
+        foreach (Control c in _list.Controls)
+        {
+            if (c is DeviceRow dr && byRow.TryGetValue(dr, out string? key))
+                order.Add(key);
+        }
+
+        // 控件顺序里漏掉的设备补在末尾，否则它会在下次刷新时被当作新设备排到最前
+        foreach (var pair in _rows)
+        {
+            if (!order.Contains(pair.Key)) order.Add(pair.Key);
+        }
+
+        _config.DeviceOrder = order;
         _config.Save();
         OrderChanged?.Invoke();
 

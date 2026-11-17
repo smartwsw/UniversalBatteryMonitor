@@ -12,8 +12,8 @@
     <ApplicationIcon>App\app.ico</ApplicationIcon>
     <AssemblyName>BatteryMonitor</AssemblyName>
     <RootNamespace>BatteryMonitor</RootNamespace>
-    <Version>1.2.0</Version>
-    <FileVersion>1.2.0.0</FileVersion>
+    <Version>1.2.1</Version>
+    <FileVersion>1.2.1.0</FileVersion>
     <Product>设备电量</Product>
     <Description>Windows 托盘外设电量监控</Description>
   </PropertyGroup>
